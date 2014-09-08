@@ -1,0 +1,92 @@
+---
+title: "Birthdays"
+author: 'R Pruim'
+date: '2014-09-08'
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r include=FALSE}
+# Don't delete this chunk if you are using the mosaic package
+# This loads the mosaic and dplyr packages
+require(mosaic)
+```
+
+```{r include=FALSE}
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+# This changes the default colors in lattice plots.
+trellis.par.set(theme=theme.mosaic())  
+
+# knitr settings to control how R chunks work.
+require(knitr)
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small"    # slightly smaller font for code
+)
+# This loads the mosaic data sets.  (Could be deleted if you are not using them.)
+require(mosaicData)   
+require(lubridate)
+```
+
+
+## Looking at Birthdays Again
+
+We have already looked at this plot a couple times
+
+```{r}
+xyplot( births ~ date, data=Births78) 
+```
+
+It was suggested that a possible explanation for the 
+two parallel waves is a weekend/weekday affect.
+We can check wether this is plausible by adding some features to our plot.
+
+First let's color by day of week. The `wday` function in the 
+lubridate pacakge will convert dates to day of the week for us.
+
+```{r}
+require(lubridate)
+xyplot( births ~ date, data=Births78, 
+        groups=wday(date)) 
+```
+
+This looks like some good evidence to support our conjecture.  There are primarily two colors in the lower
+wave and 5 in the upper wave -- but there are some exceptions.  These are easier to spot if we "connect the dots".
+
+```{r}
+xyplot( births ~ date, data=Births78, 
+        groups=wday(date), type='l' )
+```
+
+Now it is easier to see that there are a few days that
+are "in the wrong group".  (These are the holidays.)
+
+Finally, let's add a key so we know which day is which.
+```{r}
+xyplot( births ~ date, data=Births78, 
+        groups=wday(date), type='l', 
+        auto.key=TRUE)
+```
+
+Here's a much nicer version (fancier than you need to know how to 
+do just now).
+
+```{r}
+xyplot( births ~ date, data=Births78, 
+        groups=wday(date, label=TRUE, abbr=TRUE), type='l', 
+        auto.key=list(columns=4, points=FALSE, lines=TRUE)
+        )
+```
+
+
+We can also compute numbers and put them right into our text.  For example, the mean number of births is  `r mean(~births, data=Births78)`.   That's more digits than we need.   We could choose to round this to  `r round(mean(~births, data=Births78))`.  
