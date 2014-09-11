@@ -1,0 +1,104 @@
+---
+title: "Describing Distributions"
+author: "R Pruim"
+date: '2014-09-09'
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r include=FALSE}
+# Don't delete this chunk if you are using the mosaic package
+# This loads the mosaic and dplyr packages
+require(mosaic)
+```
+
+```{r include=FALSE}
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+# This changes the default colors in lattice plots.
+trellis.par.set(theme=theme.mosaic())  
+
+# knitr settings to control how R chunks work.
+require(knitr)
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small"    # slightly smaller font for code
+)
+# This loads the mosaic data sets.  (Could be deleted if you are not using them.)
+require(mosaicData)   
+```
+
+
+## Pros and cons of Experimental vs Observational studies
+
+ * Experiments may be artificial
+ * Observation studies need to be wary about confounding
+ * Some experiments are not ethical
+ 
+
+
+## Distributions
+
+When we talk about the distribution of a variable, we are  talking about the answers to the following questions: 
+
+  * what values? 
+  * how often?
+
+We can summarize distributions in several ways:
+
+ * tables 
+ * graphs 
+ * numerical summaries
+ * adjectives that describe the "shape"
+
+### HELPrct
+
+The Health Evaluation and Linage to Primary Care data set has information collected on individuals admitted for treatment of an adiction to alcohol, cocaine, or heroin.
+
+#### substance
+
+```{r}
+tally( ~ substance, data=HELPrct)
+tally( ~ substance, data=HELPrct, format="prop")
+bargraph( ~ substance, data=HELPrct)
+```
+
+#### sex
+```{r}
+tally( ~ sex, data=HELPrct, format="percent")
+```
+
+#### age
+```{r}
+favstats( ~age, data=HELPrct )
+```
+
+
+#### i1
+
+`i1` is the average number of drinks (standard units) consumed per day over the 30 days before admission to the program.
+
+```{r}
+favstats( ~ i1, data=HELPrct )
+bwplot( ~i1, data=HELPrct)
+histogram( ~ i1, data=HELPrct )
+```
+
+```{r}
+bwplot( substance ~ i1, data=HELPrct )
+histogram( ~ i1 | substance, data=HELPrct, width=20 )
+favstats( ~ i1 | substance, data=HELPrct )
+favstats(i1 ~ substance, data=HELPrct )
+densityplot( ~ i1, groups=substance, data=HELPrct, width=20, auto.key=TRUE, lwd=3 )
+```
+
+
