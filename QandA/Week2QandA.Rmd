@@ -1,0 +1,126 @@
+---
+title: "Math 145 Q&A"
+author: "R Pruim"
+date: "Fall 2014 -- Week 2"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r include=FALSE}
+# Don't delete this chunk if you are using the mosaic package
+# This loads the mosaic and dplyr packages
+require(mosaic)
+```
+
+```{r include=FALSE}
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+# This changes the default colors in lattice plots.
+trellis.par.set(theme=theme.mosaic())  
+
+# knitr settings to control how R chunks work.
+require(knitr)
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small"    # slightly smaller font for code
+)
+# This loads the mosaic data sets.  (Could be deleted if you are not using them.)
+require(mosaicData)   
+require(Lock5withR)   
+```
+
+## Homework Hints
+
+**Prof Pruim:**
+A few notes regarding the homework for tomorrow:
+
+1) Remember that in your RMarkdown file you will need to have 
+
+```{r}
+require(Lock4withR)
+```
+
+This tells R to load in the package that contains the data sets from our text.  The names of the data sets are usually in bold print in the book.  (You could also use `Lock5Data`, but that package is older and is missing some of the things in the newer one.)
+
+2) Remember that you can use `head()`, `str()`, or `summary()` to inspect a data frame to see what the variables are called and what kind of data they contain.  You can also type, for example, 
+
+```{r eval=FALSE}
+?StudentSurvey
+```
+
+to get to the help page for the data and read the code book.  Pay attention to capitalization.  ("Object not found" usually means that you used the wrong name for an object or did not load the package where it lives.)
+
+3) It looks like our grader will be picking up homework at about 3pm most times.  This means that you have a little bit of grace after class to finish up a few details based on in-class discussion.  If you don’t turn things in in class, you can put them in the folder in my box labeled "Math 145".
+
+4) There is a link on our "From Class" page to a document that has all the examples in the book worked out using R.  Take advantage of that (and the files I’ve been posting after class).
+
+5) The point of the second part of the assignment is to get R to do the calculations and make the plots.  This will mean lots of use of our template:
+
+```{r eval=FALSE}
+goal( y ~ x, data=mydata )
+```
+
+You should all be masters of that template soon.  ;-)  Don’t forget the variations on the theme:
+
+```{r, eval=FALSE}
+goal( ~ x, data=mydata )   # when there is only one variable invalid
+goal( y ~ x | z, data=mydata )   # separately for value of z
+goal( y ~ x, groups=z, data=mydata )  # overlays in plots
+```
+
+
+
+## Flipping Percentages
+
+**Student**: Hello Professor,
+
+I am having trouble getting the percentage of smokers for each gender. I have `perc(Smoke~Gender, data=StudentSurvey)` entered in but that will only give me the percentages of students that said no.
+
+Thanks 
+
+**Prof Pruim:**
+Another good question, and one with multiple answers.  R can't know which category you want to focus on, so it has to guess -- in this case based on alphabetical order.
+```{r}
+perc(Smoke~Gender, data=StudentSurvey)
+```
+
+
+Here are some fixes:
+
+### Fix 1: Arithmetic
+
+```{r}
+100 - perc(Smoke~Gender, data=StudentSurvey)
+```
+
+The downside is that the labeling isn't very good.
+
+### Fix 2: Tell R what level you want
+
+In R lingo, the possible categories for a categorical variable are 
+called **levels**.  You can tell R which one you want to count using `level`:
+```{r}
+perc(Smoke~Gender, data=StudentSurvey, level="Yes" )
+```
+
+Side note: if the categorical variable has more than two levels, `prop()` and `perc()` will compute the proportion or percent in one of the levels and lump all the other levels together.
+
+### Fix 3: Use tally()
+
+```{r}
+tally( ~ Smoke + Gender, data=StudentSurvey)
+tally( Smoke ~ Gender, data=StudentSurvey)
+tally( Smoke ~ Gender, data=StudentSurvey, format="percent")
+tally( Smoke ~ Gender, data=StudentSurvey, format="percent", margins=TRUE)
+```
+
+
