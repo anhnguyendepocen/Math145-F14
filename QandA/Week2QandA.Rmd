@@ -3,10 +3,10 @@ title: "Math 145 Q&A"
 author: "R Pruim"
 date: "Fall 2014 -- Week 2"
 output:
-  pdf_document:
+  html_document:
     fig_height: 3
     fig_width: 5
-  html_document:
+  pdf_document:
     fig_height: 3
     fig_width: 5
   word_document:
@@ -49,7 +49,7 @@ A few notes regarding the homework for tomorrow:
 require(Lock4withR)
 ```
 
-This tells R to load in the package that contains the data sets from our text.  The names of the data sets are usually in bold print in the book.  (You could also use `Lock5Data`, but that package is older and is missing some of the things in the newer one.)
+This tells R to load in the package that contains the data sets from our text.  The names of the data sets are usually in bold print in the book.  (You could also use `Lock5Data`, but that package is older and is missing some of the things in the newer one.)  
 
 2) Remember that you can use `head()`, `str()`, or `summary()` to inspect a data frame to see what the variables are called and what kind of data they contain.  You can also type, for example, 
 
