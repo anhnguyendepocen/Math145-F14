@@ -1,0 +1,208 @@
+---
+title: "Randomization Review"
+author: "R Pruim"
+date: '2014-09-19'
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r include=FALSE}
+# Don't delete this chunk if you are using the mosaic package
+# This loads the mosaic and dplyr packages
+require(mosaic)
+```
+
+```{r include=FALSE}
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+# This changes the default colors in lattice plots.
+trellis.par.set(theme=theme.mosaic())  
+
+# knitr settings to control how R chunks work.
+require(knitr)
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small"    # slightly smaller font for code
+)
+# This loads the mosaic data sets.  (Could be deleted if you are not using them.)
+require(mosaicData)   
+require(Lock5withR)
+```
+
+
+# Overview of Randomization Distributions we have seen
+
+We have used randomization distributions in 5 situations so far.
+The procedure for each is very similar:
+
+1. State the Null and Alternative Hypotheses
+
+  Remember these will be about a parameter or parameters.
+  
+2. Compute a Test Statistic
+
+  Often the test statistic uses "data versions" of the parameters. If the hypothesis is about population means, the test statistics will involve sample means, etc.
+  
+3. Determine the p-value (from a simulated randomization distribution)
+
+We need to simulate a world 
+
+  a. where the null hypothesis is true,
+    
+  b. that reflects the design of our study, and 
+    
+  c. takes advantage of information the data provides about the population.
+    
+4. Interpret/Draw a conclusion
+
+  Small p-values provide evidence against the null hypothesis.  
+  When the p-value is *small enough* we say the results are **statistically significant**.  (The threshold for smallness depends on context.)
+
+## Creating Randomization Distributions
+
+Here is a side by side comparision of the ways we have created randomization distributions in our 5 key examples:
+
+```{r eval=FALSE}
+# rflip can simulate any proportion
+Lady.Rand <- do(10000) * rflip(20)   # p = 0.50 by default
+Hugo.Rand <- do(10000) * rflip(50, prob=1/6)
+```
+These three involve two variables and shuffle the explantory variable.
+```{r eval=FALSE}
+Taps.Rand <- do(10000) *
+  diffmean( Taps ~ shuffle(Caffeine), data=CaffeineTaps)
+Ticket.Rand <-do(10000) * 
+  diffprop(ticket ~ shuffle(ticketVer), data=Survey)
+Ticket.Rand <- do(10000) * 
+  diffprop(ticket ~ shuffle(ticketVer), data=Survey)
+```
+
+Testing a mean is a little bit different because we want to 
+shift the disribution to make the mean match the null hypothesis value.  This maintains the shape of the distribution.  Note the use of `resample()` here.  This is sampling *with replacement*.
+```{r, eval=FALSE}
+Temp.Rand <- do(10000) * 
+  mean( ~ (BodyTemp + .34), data= resample(BodyTemp50)) 
+```
+Full details for each example appear below.
+
+## Testing a Proprtion: 
+
+### Lady Tasting Tea 
+
+$H_0$: $p=0.50$; $n=20$
+
+Test Stat: $x = 18$ or $\hat p = 18/20 =0.9$ 
+
+```{r}
+Lady.Rand <- do(10000) * rflip(20)
+histogram ( ~ heads, data=Lady.Rand, v = 18)
+# one-sided p-values
+tally( ~ heads >= 18, data=Lady.Rand, format="prop")
+tally( ~ prop >= 0.9, data=Lady.Rand, format="prop")
+```
+
+### Hugo
+
+$H_0: p = 1/6$; $n=50$
+
+Test Stat: $x = 16$ or $\hat p = 16/50 = 0.32$ 
+
+```{r}
+Hugo.Rand <- do(10000) * rflip(50, prob=1/6)
+histogram ( ~ prop, data=Hugo.Rand, v = .32)
+# one-sided p-values
+tally( ~( heads >= 16), data=Hugo.Rand, format="prop")
+tally( ~( prop >= 0.32), data=Hugo.Rand, format="prop")
+```
+
+### Testing the Difference Between Two Means:  Caffeine Taps
+
+$H_0$: $\mu_1 = \mu_2$  ($\mu_1 - \mu_2 = 0$)
+
+Test Stat:  $\overline x_1 - \overline x_2$  (Use `diffmean()`)
+
+```{r}
+testStat = diffmean(Taps ~ Caffeine, data=CaffeineTaps); testStat
+Taps.Rand <- do(10000) *
+  diffmean( Taps ~ shuffle(Caffeine), data=CaffeineTaps)
+histogram( ~diffmean, data=Taps.Rand, v=testStat )
+# two-sided
+tally( ~(abs(diffmean) >= abs(testStat)), data=Taps.Rand, format="prop" )
+
+```
+
+### Testing the Difference Between Two Proportions: Survey Question
+
+```{r, include=FALSE}
+Survey <- read.file(
+  "http://www.calvin.edu/~rpruim/courses/m145/F14/Data/Math145F14SurveyResults.csv", 
+  stringsAsFactors=FALSE)
+# turn things into factors if they don't have many different values
+Survey <- factorize(Survey)  
+```
+
+$H_0$: $p_1 = p_2$ ($p_1 - p_2 = 0$)
+
+Test Stat: $\hat p_1 = \hat p_2 = `r diffprop(ticket ~ ticketVer, data=Survey)`$
+
+```{r}
+testStat <- diffprop(ticket ~ ticketVer, data=Survey); testStat
+Ticket.Rand <- do(10000) * 
+  diffprop(ticket ~ shuffle(ticketVer), data=Survey)
+histogram(~diffprop, data=Ticket.Rand, v=testStat)
+# one-sided
+tally(~ (diffprop >= testStat), data=Ticket.Rand, format="prop")
+# one-side, alternative method
+prop(~ (diffprop >= testStat), data=Ticket.Rand)
+```
+
+### Testing for Associaition Between Two Quantitative Variables: NFL Uniforms
+
+$H_0$: $\rho = 0$
+
+Test Stat: $r = `cor( ZPenYds ~ NFL_Malevolence, data=MalevolentUniformsNFL)`$
+
+```{r}
+head(MalevolentUniformsNFL)
+xyplot( ZPenYds ~ NFL_Malevolence, data=MalevolentUniformsNFL)
+testStat <- 
+  cor( ZPenYds ~ NFL_Malevolence, data=MalevolentUniformsNFL)
+testStat
+NFL.Rand <- do(10000) * 
+  cor(ZPenYds ~ shuffle(NFL_Malevolence), data=MalevolentUniformsNFL)
+head(NFL.Rand)
+histogram( ~ result, data=NFL.Rand)
+# one-sided
+tally( ~ (result >= testStat), data=NFL.Rand, format="prop")
+# two-sided
+tally( ~ (abs(result) >= testStat), data=NFL.Rand, format="prop")
+```
+
+### Testing a Mean: Body Temperature
+
+$H_0$: $\mu = 98.6$
+
+Test Stat:  $\overline x = `r mean(~BodyTemp, data=BodyTemp50)`$
+
+```{r}
+mean(~ BodyTemp, data=BodyTemp50)
+histogram(~ BodyTemp, data=BodyTemp50)
+98.6 - 98.26
+# shift by 0.34 so the mean is like in the null hypothesis
+Temp.Rand <- do(10000) * 
+  mean(~ (BodyTemp + .34), data= resample(BodyTemp50)) 
+histogram( ~ result, data=Temp.Rand, v=98.26)
+tally( ~ result > 98.26, data=Temp.Rand, format="prop")
+# a short cut
+prop(~ result > 98.26, data=Temp.Rand)
+```
+

@@ -1,0 +1,99 @@
+---
+title: "Intro to Hypothesis Testing"
+author: "R Pruim"
+date: '2014-09-12'
+output:
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r include=FALSE}
+# Don't delete this chunk if you are using the mosaic package
+# This loads the mosaic and dplyr packages
+require(mosaic)
+```
+
+```{r include=FALSE}
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+# This changes the default colors in lattice plots.
+trellis.par.set(theme=theme.mosaic())  
+
+# knitr settings to control how R chunks work.
+require(knitr)
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small"    # slightly smaller font for code
+)
+# This loads the mosaic data sets.  (Could be deleted if you are not using them.)
+require(mosaicData)   
+```
+
+## Hypothesis Testing: Four Steps
+
+We will illustrate our 4 Step Process using the Lady Tasting Tea example.  Suppose we test her on 20 cups and she correctly identifies 18 of the 20.
+
+
+### Step 1: State Null and Alternative Hypotheses
+
+For the Lady Tasting Tea, our Null Hypothesis is that the lady is 
+just guessing, so her probability of correctly identifying a cup
+is 50%.  The alternative is that she does better.
+
+ * $H_0$: $p=0.50$
+ * $H_0$: $p>0.50$
+
+### Step 2: Compute a test statistic
+
+We summarize all the evidence in our data as a single number.  Since the number if computed from our data, it is a statistic.  In this case we could use either the number correct ($x=18$) or the proportion correct ($\hat p = 0.9)$
+
+### Step 3: Determine the p-value
+
+We want to know how unlikely it would be to get 18 or more correct just by guessing -- that is, assuming $H_0$ is true.  To answer this, we can simulate a world where $H_0$ is true.  In this case, flipping coins (or getting a computer to simulate flipping coins) can do the job.  The `rflip()` function in R will do the flipping for us.
+
+```{r}
+rflip()       # flip one coin
+rflip(20)     # flip 20 coins
+```
+
+Now we just need to do this a lot of times and keep track of the values of our test statistic.  The `do()` function will help us
+do things repeatedly.  Let's do it 10000 times and keep track of the results.
+
+```{r echo=FALSE}
+set.seed(123)
+```
+```{r}
+do(10000) * rflip(20) -> RandomLadies
+head(RandomLadies)
+# set width = 1 to avoid artifacts in histogram
+histogram( ~heads, data=RandomLadies, width=1, v=18 )
+tally( ~ heads, data=RandomLadies )
+tally( ~ (heads>=18), data=RandomLadies )
+```
+
+```{r include=FALSE}
+tailCount <- tally(~ (heads >= 18), data=RandomLadies)[1]
+```
+
+In this case, only `r tailCount` of our 10000 simulations produced a test statistic as large as 18.  So our estimated p-value is  `r tailCount / 10000`.
+
+### Step 4: Draw a conclusion
+
+So what do we conclude?  While it is possible that someone could get 18 out of 20 correct just by guessing, it is very unlikely. This is evidence against the null hypothesis.  
+So we reject the null hypothesis.  
+
+Keep in mind that we do not know for sure that $H_0$ is false.  What we know is that one of the following is the case:
+
+ * $H_0$ is false
+ * $H_0$ is true, but something very unusual just happened.
+ 
+Unusual things can happen -- but not very often.  That's what makes them unusual.
+

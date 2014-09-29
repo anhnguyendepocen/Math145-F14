@@ -3,10 +3,10 @@ title: "Math 145 Q&A"
 author: "R Pruim"
 date: "Fall 2014 -- Week 2"
 output:
-  html_document:
+  pdf_document:
     fig_height: 3
     fig_width: 5
-  pdf_document:
+  html_document:
     fig_height: 3
     fig_width: 5
   word_document:
@@ -75,6 +75,27 @@ You should all be masters of that template soon.  ;-)  Don’t forget the variat
 goal( ~ x, data=mydata )   # when there is only one variable invalid
 goal( y ~ x | z, data=mydata )   # separately for value of z
 goal( y ~ x, groups=z, data=mydata )  # overlays in plots
+```
+
+## Dealing with missing data
+
+**Student:**
+When computing the mean for females in question 2.60, it says `NA`, but the mean for the males are found. Is there a way I can go about this, because it seems maybe there is not enough data.
+
+Thank you
+
+**Prof Pruim:**
+This is a good question.  The short answer is that R "can't" tell you the mean amount of exercise for the women because one of them didn’t report a value.   `NA` is R’s way of saying that something is missing or can’t be computed.
+
+But you might like to compute the mean for the women you do have.  You can do that two ways.
+
+1) Use `favstats()`, which will report the number of missing values, but compute the mean for the non-missing values.
+
+2) add `na.rm=TRUE` as an argument to the `mean()` function.  This tells R to remove the missing values before calculating the mean.
+
+```{r}
+favstats(Exercise ~ Gender, data=StudentSurvey)
+mean(Exercise ~ Gender, data=StudentSurvey, na.rm=TRUE)
 ```
 
 

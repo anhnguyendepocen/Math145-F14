@@ -1,0 +1,108 @@
+---
+title: "Creating Randomization Distributions"
+author: "R Pruim"
+date: '2014-09-16'
+output:
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r include=FALSE}
+# Don't delete this chunk if you are using the mosaic package
+# This loads the mosaic and dplyr packages
+require(mosaic)
+```
+
+```{r include=FALSE}
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+# This changes the default colors in lattice plots.
+trellis.par.set(theme=theme.mosaic())  
+
+# knitr settings to control how R chunks work.
+require(knitr)
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small"    # slightly smaller font for code
+)
+# This loads the mosaic data sets.  (Could be deleted if you are not using them.)
+require(mosaicData)   
+```
+
+## Hugo
+
+I once played a game with my kids expecting a ghost to be rolled 1 time in 6.  It felt like the ghost (Hugo) was coming up too often, so I collected some data. In 50 rolls of the die, there were 16 "Hugos".  What should I conclude about the die?
+
+Our null hypothesis is that the proportion is 1/6:
+
+ * $H_0$: $p = 1/6$
+ * $H_a$: $p \neq 1/6$
+ 
+Let's create a randomization distribution and use it to get a p-value.  We can do this almost like we did with
+the Lady Tasting Tea, but this time we need to simulate
+a proportion of 1/6 because our null hypothesis is that 
+Hugo is rolled one time in 6.
+
+Here's how to do it:
+
+```{r}
+Hugo.Rand <- do(1000) * rflip( 50, prob=1/6)
+histogram( ~ heads, data=Hugo.Rand, width=1, v=16)
+mean( ~heads, data=Hugo.Rand)
+tally( ~heads, data=Hugo.Rand )
+tally( ~(heads >=16), data=Hugo.Rand, format="prop")
+```
+
+We could also choose to work with proportions instead of counts:
+
+```{r}
+histogram( ~ prop, data=Hugo.Rand, width=0.02, v=16/50)
+mean( ~prop, data=Hugo.Rand)
+tally( ~prop, data=Hugo.Rand )
+tally( ~(prop>=16/50), data=Hugo.Rand, format="prop")
+```
+
+## Caffeine and Finger Tapping
+
+Our Null Hypothesis is that the mean finger tapping rate is the same for the caffeine and no caffeine groups.
+
+ * $H_0$: $\mu_C = \mu_{NC}$
+ * $H_a$: $\mu_C \neq \mu_{NC}$
+
+Now we must simulate a world where the two means are the same.  One way to do this that reflects the design of the study is to shuffle the Caffeine/No Caffeine labels.  If there isn't a relationship between caffeine and finger tapping.  Here's how:
+
+```{r}
+mean( Taps ~ Group, data=CaffeineTaps)
+diff( mean( Taps ~ Group, data=CaffeineTaps) )
+diffmean( Taps ~ Group, data=CaffeineTaps)
+diffmean( Taps ~ shuffle(Group), data=CaffeineTaps )
+Tap.Rand <- do(10000) * 
+  diffmean( Taps ~ shuffle(Group), data=CaffeineTaps )
+histogram( ~ diffmean, data=Tap.Rand, v=-3.5)
+mean( ~diffmean, data=Tap.Rand)
+# one-sided
+tally( ~(diffmean <= -3.5), data=Tap.Rand, 
+       format="prop")
+# both sides:
+tally( ~(abs(diffmean) >= 3.5), data=Tap.Rand, 
+       format="prop")
+```
+
+## Survey says
+
+Next time we will look at how the version of our survey questions affected the response.  This situation will be almost identical the the one above except that the response variable is categorical instead of quantititative.  So our null hypothesis is about proportions instead of about means:
+
+ * $H_0$: $p_1 = p_2$
+ * $H_a$: $p_1 \neq p_2$
+ 
+If we replace `diffmean()` with `diffprop()` to deal with proportions instead of means, we can follow the outline above.  We'll do that next time.
+
+
