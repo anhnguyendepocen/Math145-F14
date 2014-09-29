@@ -1,0 +1,95 @@
+---
+title: "More Randomization Distributions"
+author: "R Pruim"
+date: '2014-09-18'
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r include=FALSE}
+# Don't delete this chunk if you are using the mosaic package
+# This loads the mosaic and dplyr packages
+require(mosaic)
+```
+
+```{r include=FALSE}
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+# This changes the default colors in lattice plots.
+trellis.par.set(theme=theme.mosaic())  
+
+# knitr settings to control how R chunks work.
+require(knitr)
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small"    # slightly smaller font for code
+)
+# This loads the mosaic data sets.  (Could be deleted if you are not using them.)
+require(mosaicData)   
+```
+
+
+## Survey Says
+
+First, let's read in the data.  In RStudio,
+there is a GUI for this in the environment tab.  (Look for Import Dataset.)  But we can't click on things in an RMarkdown document, so we need a command to do it.  `read.file()` can read from files or from URLs, so we can load the survey data directly from the course website.
+```{r}
+Survey <- read.file(
+  "http://www.calvin.edu/~rpruim/courses/m145/F14/Data/Math145F14SurveyResults.csv", 
+  stringsAsFactors=FALSE)
+# turn things into factors if they don't have many different values
+Survey <- factorize(Survey)  
+
+# let's check that things look OK
+summary(Survey)
+head(Survey)
+str(Survey)
+```
+
+Now we are ready to test the null hypothesis that the version
+of the ticket question does not affect the answers.  That is, the proportion of subjects who say "yes" (they would buy a ticket) is the same whether they are told they lost a ticket or a $20 bill.
+
+First, let's look at our data.
+```{r}
+tally( ticket ~ ticketVer, data=Survey)
+# adding margins makes it clearer which proportions we are getting here
+tally( ticket ~ ticketVer, data=Survey, margins=TRUE)
+# If we prefer counts, we can do it this way
+tally( ~ ticket + ticketVer, data=Survey)
+tally( ticket ~ ticketVer, data=Survey, format="count")
+```
+Now let's compute our test statistic.  The difference in proportions is a good way to summarize our evidence.
+```{r}
+testStat <- diffprop( ticket ~ ticketVer, data=Survey)
+testStat  # naming this makes it easier to use again later
+```
+The proportions are different in our two groups, but are they different enough to convince us that the version of the question makes a difference?  Or could this happen just by random chance?
+Let's creat a randomization distribution to find out.
+
+```{r}
+Ticket.Rand <- do(10000) * 
+  diffprop( ticket ~ shuffle(ticketVer), data=Survey)
+head(Ticket.Rand)
+histogram( ~ diffprop, data=Ticket.Rand, v=testStat )
+# here is one way to do the two-sided version of the test
+tally( ~( abs(diffprop) >= abs(testStat)), 
+       data=Ticket.Rand, format="prop")
+# here is a one-sided version
+tally( ~( diffprop >= testStat), 
+       data=Ticket.Rand, format="prop")
+```
+That's a pretty large p-value, so we can't reject the null hypothesis.
+Our data are consistent with the hypothesis that the version of the question doesn't matter.  We say the difference we observed is **not statistically significant**.
+
+This is not necessarily evidence in support of the null hypothesis -- we may simply not have enough data to tell one way or another.  We'll have to wait to find out more about evidence that can genuinely be said to support a null hypothesis.  Stay tuned...
+
+

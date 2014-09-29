@@ -1,0 +1,120 @@
+---
+title: "Sampling Distributions"
+author: "R Pruim"
+date: "2014-09-26"
+output: 
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r include=FALSE}
+# Don't delete this chunk if you are using the mosaic package
+# This loads the mosaic and dplyr packages
+require(mosaic)
+```
+
+```{r include=FALSE}
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+# This changes the default colors in lattice plots.
+trellis.par.set(theme=theme.mosaic())  
+
+# knitr settings to control how R chunks work.
+require(knitr)
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small"    # slightly smaller font for code
+)
+# This loads the mosaic data sets.  (Could be deleted if you are not using them.)
+require(mosaicData)   
+```
+
+## Estimation
+
+Our goal is to learn how to estimate parameters using data.
+
+ * Estimate: our best guess for the parameter value
+    * this is a statistic -- a number we calculate from data
+    * often (but not always) this is simple the "data version" of our parameter of interest
+      * sample mean ($\overline x$) estimates population mean ($\mu$)
+      * sample proportion ($\hat p$) estimates population proportion ($p$)
+      * sample correlation coefficient ($r$) estimates population proportion ($\rho$)
+      * etc.
+    
+The key question is *How precise are these estimates?*
+
+###  The Land of Make Believe
+For today, we are going to pretend that we have access to an entire population.  This will essentially never be true in practice, but thinking about this situation will help us understand what we do in practice.
+
+In the Land of Make Believe, we can generate lots of samples, compuate estimates from each sample, and see how close these estimates are to the true population parameter value.
+
+Our example population is all statistics and biostatistics PhD programs in the United States.  We want to estimate the mean number of graduates students in such a program from a sample of size 10.  We can use `sample()` to create these samples.
+
+```{r}
+str(StatisticsPhD)
+sample( StatisticsPhD, 10 )
+sample( StatisticsPhD, 10 )
+```
+
+As we see, we don't get the same estimate from every sample.
+```{r}
+mean ( ~ FTGradEnrollment, data=sample(StatisticsPhD, 10) )
+mean ( ~ FTGradEnrollment, data=sample(StatisticsPhD, 10) )
+mean ( ~ FTGradEnrollment, data=sample(StatisticsPhD, 10) )
+mean ( ~ FTGradEnrollment, data=sample(StatisticsPhD, 10) )
+mean ( ~ FTGradEnrollment, data=sample(StatisticsPhD, 10) )
+mean ( ~ FTGradEnrollment, data=sample(StatisticsPhD, 10) )
+```
+
+Let's do this lots of times and see what the distribution looks like.  The distribution of these estimates is called the  **sampling distribution**.
+```{r}
+Sampling.Grad <- do( 10000 ) * 
+  mean ( ~ FTGradEnrollment, data=sample(StatisticsPhD, 10) )
+head(Sampling.Grad)
+histogram( ~ result, data=Sampling.Grad)
+```
+One important fact about the samping distribution (for a sample mean) is that the mean of the sampling distribution is the mean of the population:
+
+```{r}
+mean( ~ result, data=Sampling.Grad )
+mean( ~ FTGradEnrollment, data=StatisticsPhD )
+```
+
+When this happens, we will say that our estimation method is **unbiased** (because *on average* it is correct).
+
+Nevertheless, some estimates are above average and some are below average.  We would like to know how far above or below average estimates are likely to be.  One way to measure the variability in these estimates is to compute the standard error of the sampling distribution.  This is called the **standard error** and denoted SE.
+
+```{r}
+# Standard error (SE):
+sd ( ~ result, data= Sampling.Grad )
+```
+
+The smaller the standard error, the more precise our estimates are.  In particular, larger sample sizes lead to smaller standard errors.  Let's see what happens if we use samples of size 20 instead of samples of size 10:
+
+```{r}
+Sampling.Grad20 <- do( 10000 ) * 
+  mean ( ~ FTGradEnrollment, data=sample(StatisticsPhD, 20) )
+histogram( ~ result, data=Sampling.Grad20)
+sd( ~ result, data=Sampling.Grad20)
+```
+
+Notice the smaller standard error (and narrower sampling distribution in this case).
+
+
+## Confidence Intervals
+
+A 95% confidence interval can be formed by creating an interval that extends two standard errors in either direction of the estimate:
+
+$$
+\mathrm{estimate} \pm 2 SE
+$$
+
+This works reasonably well when the sampling distribution is roughly symmetric and bell-shaped.

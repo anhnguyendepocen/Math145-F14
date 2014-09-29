@@ -1,0 +1,158 @@
+---
+title: "Class Notes 2014-09-11"
+author: 'R Pruim'
+date: '2014-09-11'
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r include=FALSE}
+# Don't delete this chunk if you are using the mosaic package
+# This loads the mosaic and dplyr packages
+require(mosaic)
+```
+
+```{r include=FALSE}
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+# This changes the default colors in lattice plots.
+trellis.par.set(theme=theme.mosaic())  
+
+# knitr settings to control how R chunks work.
+require(knitr)
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small"    # slightly smaller font for code
+)
+# This loads the mosaic data sets.  (Could be deleted if you are not using them.)
+require(mosaicData)   
+```
+
+## Old Faithful
+
+### How long is a typical eruption? How much does the length of an eruption vary?
+
+```{r}
+require(MASS)   # geyser data lives here
+mean(~duration, data=geyser)
+median(~duration, data=geyser)
+
+favstats( ~ duration, data=geyser )
+```
+
+### We need more than numbers
+
+Looking at some plots shows us that the mean and median might not be very good summary numbers for this data.
+
+```{r}
+densityplot( ~ duration, data=geyser )
+bwplot( ~ duration, data=geyser )
+histogram( ~ duration, data = geyser, width = 0.2 )
+```
+
+There is also a quirky artifact in the data.
+
+```{r}
+histogram( ~ duration, data = geyser, width = 0.05 )
+```
+
+Apparently during the nigth, eruptions were listed as long or  short and recorded as 4 or 2 minutes.  See `?geyser` for more about the data.
+
+### Duration vs wait
+
+`waiting` is the length of time since the previous eruption.  For scatter plots, we put the explanatory variable (if there is one) on the x-axis and the response on the y-axis.  Since the eruptions come *after* the wait, we'll consider duration to be the response.
+
+```{r}
+xyplot( duration ~ waiting, data=geyser )
+```
+
+We can also calculate the time until the next eruption.  (You don't need to fully understand this code, but it is shifting the waits over one row.)
+
+```{r}
+geyser <- geyser %>% 
+  mutate( time.til.next = c(tail(waiting, -1), NA) )
+xyplot( time.til.next ~ duration, data=geyser )
+```
+
+This shows a much clearer picture.  After a longer eruption, we expect a longer wait.
+
+### Z-scores
+
+Z-scores measure how far above or below the mean a value is in units of standard deviations.  That is, they answer the question: 
+
+> How many standard deviations above or below the mean is this value?  
+
+Here's the formula:
+$$
+Z = \frac{\mathrm{value} - \mathrm{mean}}{\mathrm{standard\ deviation}}
+$$
+
+This gives us a standardized way of comparing values across distributions.
+
+#### Example: Men's and Women's heights
+
+Let's compare a 6'0" woman to a 6'5" man.  Which seems more unusual (i.e., farther above average)?
+
+We can use this information to do the calculations.
+```
+ Height and Weight distributions
+
+            height (male 18-74)     N(5'9",3") =    N(69,3)
+            height (female 18-74)   N(5'3.5",2.5")= N(63.5,2.5)
+
+            height (male 18-24)     N(5'10",3") =   N(70,2.8)
+            height (female 18-24)   N(5'4.3",2.6")= N(64.3,2.6)
+
+            height (male 11)        N(146cm,8cm) =  N(57.5,3.15)
+
+            weight (male 18-24)     N(162,29.1)
+            weight (female 18-24)   N(134,27)
+```
+
+```{r}
+z_woman <- (72 - 64.3) / 2.6; z_woman
+z_man <- (77 - 70) / 2.8; z_man
+```
+So it is more unusual for a woman to be 6'0" than for a man to be 6'5".
+
+### Correlation coefficient
+
+We would like a number that measures the strength (and direction) of linear associations between two variables.  The correleation coefficient ($r$) is computed by summing the products of z-scores and dividing by $n-1$.  We won't calculate this number by hand.
+
+Here's what you need to know about $r$:
+
+ * $r$ is always between -1 and 1
+ * $r=1$ only for a perfect linear fit with positive slope
+ * $r=-1$ only for a perfect linear fit with negative slope
+ * we get the same number if we reverse the roles of explantory and response variables
+ * the `cor()` function in R computes it for us
+
+
+```{r}
+# get the same value either way around for cor():
+cor( waiting ~ duration, data=geyser )
+cor( duration ~ waiting, data=geyser )
+# this doesn't work because some we have some missing data
+cor( time.til.next ~ duration, data=geyser )  
+tail( geyser, 3 )
+# ignore missing data -- use only complete observations
+cor( time.til.next ~ duration, data=geyser, use="complete.obs") 
+```
+
+As expected, the correlation is stronger (closer to 1) for `time.til.next`.
+
+#### Correlation Guessing Game
+
+You can get calibrated to the correlation scale by playing this game:
+
+ * [Correlation Guessing Game](http://www.istics.net/Correlations/)
+ 

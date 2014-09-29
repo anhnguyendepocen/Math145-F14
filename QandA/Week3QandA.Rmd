@@ -1,0 +1,66 @@
+---
+title: "Math 145 Week 3 Q & A"
+author: "R Pruim"
+date: "Fall 2014"
+output:
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r include=FALSE}
+# Don't delete this chunk if you are using the mosaic package
+# This loads the mosaic and dplyr packages
+require(mosaic)
+```
+
+```{r include=FALSE}
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+# This changes the default colors in lattice plots.
+trellis.par.set(theme=theme.mosaic())  
+
+# knitr settings to control how R chunks work.
+require(knitr)
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small"    # slightly smaller font for code
+)
+# This loads the mosaic data sets.  (Could be deleted if you are not using them.)
+require(mosaicData)   
+```
+
+
+**Student:**
+Hello Professor,
+
+I am having difficulty getting a tally function to work. I am trying to make my own randomization distribution based on criteria from question 4.118 on page 277 in the text book. When I try to tally for heads more than .5 it tells me that there are 1 true and 0 false which isn't right. here is my rcode.
+
+```{r}
+Rand.Rand <- do(5000)*rflip(100, prob=.5)
+histogram(~heads, data=Rand.Rand, width=1)
+mean(~heads, data=Rand.Rand)
+tally(~heads>.5, data=Rand.Rand, format="prop")
+```
+
+If you could help that would be great and thank you.
+
+**Prof Pruim:**
+As is often the case, R is doing exactly what you told it to do.  You just didn't ask the right question.  You are asking R to tally up which random runs have more than 0.5 heads.  They **all** do.  
+
+Basically, you are mixing counts and proportion. You either want `~(prob > 0.5)` or `(~heads > 50)`.  For example,
+
+```{r}
+tally( ~(prop > 0.5), data=Rand.Rand, format="prop" )
+```
+Alternatively, you could do
+```{r}
+prop( ~(prop > 0.5), data=Rand.Rand)
+```

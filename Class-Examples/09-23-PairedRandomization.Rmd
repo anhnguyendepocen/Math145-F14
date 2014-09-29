@@ -1,0 +1,112 @@
+---
+title: "Paired Designs"
+author: "R Pruim"
+date: '2014-09-23'
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r include=FALSE}
+# Don't delete this chunk if you are using the mosaic package
+# This loads the mosaic and dplyr packages
+require(mosaic)
+```
+
+```{r include=FALSE}
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+# This changes the default colors in lattice plots.
+trellis.par.set(theme=theme.mosaic())  
+
+# knitr settings to control how R chunks work.
+require(knitr)
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small"    # slightly smaller font for code
+)
+# This loads the mosaic data sets.  (Could be deleted if you are not using them.)
+require(mosaicData)   
+```
+
+## Setting the Random Seed
+
+Before we do our example, as a reminder, let's set the random seed so we get the "same random randomizations" every time we knit this file.
+
+```{r}
+set.seed(12345)   # we can choose any number here.
+```
+
+## Bowls of M and M's
+
+A book by Tintle *et al* includes a data set based on an experiment to see whether univeristy students take more M and M's if they are presented with a larger bowl.
+Each subject was "tested" twice (on different days), once with a large bowl and once with a small bowl.  Half of the
+students had the large bowl the first time, the other half had the small bowl the first time.
+
+```{r}
+require(Tintle1)
+head(BowlsMMs)
+```
+As we see, each case has two varialbes, the number of M & M's chosen form the large bowl and the number chosen from the smaller bowl.  Our null hypothesis is that on average, the difference between these two measurements is 0:
+
+ * $H_0$: $\mu_{diff} = 0$.
+ 
+ Our test statistic is the mean difference:
+```{r}
+mean( ~( Large - Small), data=BowlsMMs)
+```
+
+We can think about the randomization distribution at least two ways.  
+
+### Converting this to a problem about one mean
+
+Since our null hypothesis is about one mean (the mean difference), we could treat it just like the Body Temperature example.  But first we need to compute all those differences.
+
+```{r}
+MM2 <- mutate( BowlsMMs, diff = Large - Small )
+head(MM2)
+```
+From this point on it is just like before
+```{r}
+testStat <- mean( ~diff, data=MM2 ); testStat
+
+MM2.Rand <- do(10000) * 
+  mean( diff - testStat, data=resample(MM2)) 
+histogram( ~ result, MM2.Rand, v=testStat)
+# 1-sided
+tally( ~(result >= testStat), data=MM2.Rand, format="prop")
+```
+A 2-sided p-value would be about twice as large.
+
+### Swapping the Small/Large labels
+
+Another way to randomize -- a way that matches the design of 
+the study well -- is to flip a coin to decide whether or not we randomly swap the value of `Small` with the value of `Large` for each subject.
+
+
+Notice how some of the Small/Large values have been swapped 
+in the example below.
+
+```{r}
+BowlsMMs
+# let's randomly swap some
+swap( BowlsMMs, Small ~ Large )
+# here is a different randomization
+swap( BowlsMMs, Small ~ Large )
+```
+
+Now we are all set to create a randomization distribution.
+```{r}
+BowlsMMs.Rand <- do(1000) *
+  mean( Large - Small, data=swap(BowlsMMs, Small ~ Large))
+histogram(~result, BowlsMMs.Rand, v=testStat)
+tally( ~(result >= testStat), data=BowlsMMs.Rand, format="prop")
+```
